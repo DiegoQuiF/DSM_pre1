@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
-from src.services.POST.postLogin import postLogin
-from src.services.POST.postObtenerDatosEstudiante import postObtenerDatosEstudiante
-from src.services.POST.postRegistrarEstudiante import postRegistrarEstudiante
-from src.services.POST.postCompletarRegistroEstudiante import postCompletarRegistroEstudiante
-from src.services.POST.postObtenerPreguntasTest import postObtenerPreguntasTest
-from src.services.GET.getTest import getTests
+from src.services.post.postLogin import postLogin
+from src.services.post.postRegister import postRegister
+from src.models.Estudiante import Estudiante
+from src.services.post.postObtenerDatosEstudiante import postObtenerDatosEstudiante
+from src.services.post.postRegistrarEstudiante import postRegistrarEstudiante
+from src.services.post.postCompletarRegistroEstudiante import postCompletarRegistroEstudiante
+from src.services.post.postObtenerPreguntasTest import postObtenerPreguntasTest
+from src.services.get.getTest import getTests
 
 main = Blueprint('index_blueprint', __name__)
 
@@ -12,14 +14,26 @@ main = Blueprint('index_blueprint', __name__)
 def login():
   try:
     data = request.get_json()
-    email = data['email_usu']
-    contra = data['contra_usu']
-    id_usu = postLogin(email, contra)
-    if(id_usu!=""):
-      datos = {'id_usu':id_usu,}
+    email = data['email']
+    contra = data['contra']
+    usuario = postLogin(email, contra)
+    if(usuario!=''):
+      datos = {'usuario':usuario}
       return jsonify({'message':'COMPLETE', 'success':True, 'data':datos})
     else:
       return jsonify({'message':'NOT FOUND', 'success':True})
+  except Exception as e:
+    return jsonify({'message':'ERROR', 'success':False})
+
+@main.route("/register", methods = ['POST'])
+def register():
+  try:
+    data = request.get_json()
+    result = postRegister(data)
+    if(result):
+      return jsonify({'message':'COMPLETE', 'success':True})
+    else:
+      return jsonify({'message':'ERROR', 'success':False})
   except Exception as e:
     return jsonify({'message':'ERROR', 'success':False})
 
