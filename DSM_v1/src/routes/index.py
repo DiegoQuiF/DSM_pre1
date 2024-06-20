@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from src.services.post.postLogin import postLogin
 from src.services.post.postRegister import postRegister
+from src.services.post.postLogin import postLogin
 from src.services.get.getTest import getTests
 
 main = Blueprint('index_blueprint', __name__)
@@ -33,7 +33,7 @@ def register():
     return jsonify({'message':'ERROR', 'success':False})
 
 @main.route("/tests", methods = ['GET'])
-def obtenerTests():
+def tests():
   try:
     tests = getTests()
     if(len(tests)>0):
