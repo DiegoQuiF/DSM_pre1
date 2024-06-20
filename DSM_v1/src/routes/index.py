@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
-from src.services.post.postRegister import postRegister
-from src.services.post.postLogin import postLogin
-from src.services.get.getTest import getTests
+from src.services.POST.postRegister import postRegister
+from src.services.POST.postLogin import postLogin
+from src.services.GET.getTest import getTests
 
 main = Blueprint('index_blueprint', __name__)
 
