@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from src.services.POST.postRegister import postRegister
 from src.services.POST.postLogin import postLogin
+from src.services.POST.postObtenerTest import postObtenerTest
 from src.services.GET.getTest import getTests
 
 main = Blueprint('index_blueprint', __name__)
@@ -43,3 +44,16 @@ def tests():
       return jsonify({'message':'NOT FOUND', 'success':True})
   except Exception as e:
     return jsonify({'message':'ERROR', 'success':False})
+
+@main.route("/obtenerTest", methods = ['POST'])
+def obtenerTest():
+  try:
+    data = request.get_json()
+    id_test = data['id_test']
+    datos = postObtenerTest(id_test)
+    if(datos):
+      return jsonify({'message':'COMPLETE', 'success':True, 'data':datos})
+    else:
+      return jsonify({'message':'NOT FOUND', 'success':True})
+  except Exception as e:
+    return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
