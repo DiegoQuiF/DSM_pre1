@@ -105,7 +105,7 @@ def registerTest():
       matriz.append(fila)
     
     result = postRegTest(id_est, matriz)
-    if(result!='')
+    if(result!=''):
       data = {'diagnostico_automatico': result.to_json()}
       return jsonify({'message':'COMPLETE', 'success':True, 'data':data})
     else:
