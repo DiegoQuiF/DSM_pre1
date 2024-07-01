@@ -9,10 +9,10 @@ def postObtenerTest(id_test):
     test = ''
     preguntas = []
     inst =  '''
-            select preg.id_preg, preg.desc_preg as descripcion, preg.min_preg as puntaje_minimo, preg.max_preg as puntaje_maximo
-              from pregunta preg, test_pregunta tpreg
-              where preg.id_preg = tpreg.id_preg and tpreg.id_test = %(id_test)s
-              order by preg.id_preg;
+            select p.*
+              from pregunta p, test_pregunta tp
+              where p.id_preg = tp.id_preg and tp.id_test = %(id_test)s
+              order by p.id_preg;
             '''
     
     with conn.cursor() as cursor:
@@ -21,13 +21,10 @@ def postObtenerTest(id_test):
         pregunta = Pregunta(row[1], row[2], row[3])
         pregunta.id_preg = row[0]
         preguntas.append(pregunta.to_json())
-      conn.commit()
       cursor.close()
     
     inst =  '''
-            select tes.id_test, tes.tipo_test as tipo, tes.desc_test as descripcion, tes.recom_test as recomendacion
-              from test tes
-              where tes.id_test = %(id_test)s;
+            select * from test where id_test = %(id_test)s;
             '''
     
     with conn.cursor() as cursor:

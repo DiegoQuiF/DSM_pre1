@@ -6,8 +6,7 @@ def getTests():
     conn = connection()
     tests = []
     inst =  '''
-              select tes.id_test, tes.tipo_test as tipo, tes.desc_test as descripcion, tes.recom_test as recomendacion
-	              from test tes;
+              select * from test;
             '''
     with conn.cursor() as cursor:
       cursor.execute(inst, )

@@ -1,63 +1,33 @@
 from src.database.db import connection
-from src.models.Estudiante import Estudiante
-from src.models.Especialista import Especialista
 
-def postRegister(data):
+def postRegister(nombre, paterno, materno, correo, contra, tipo):
   try:
     conn = connection()
     
-    tipo_usuario = data['tipo_usuario']
-    nombre = data['nombre']
-    aPaterno = data['aPaterno']
-    aMaterno = data['aMaterno']
-    correo = data['correo']
-    contrasenia = data['contrasenia']
-    inst = ''
+    id_pers = ''
+    inst =  '''
+            insert into persona(nombres, paterno, materno)
+              values(%(nombre)s, %(paterno)s, %(materno)s)
+              returning id_pers;
+            '''
     
-    if tipo_usuario == 'estudiante' or tipo_usuario == 'especialista':
-      
-      if tipo_usuario == 'estudiante':
-        
-        inst =  '''
-                do $$
-                declare
-                    nuevo_id_usu int;
-                begin
-                    insert into usuario(nom_usu, pat_usu, mat_usu, tipo_usu, email_usu, contra_usu)
-                      values (%(nombre)s, %(aPaterno)s, %(aMaterno)s, %(tipo_usuario)s, %(correo)s, %(contrasenia)s)
-                      returning id_usu into nuevo_id_usu;
-                    
-                    insert into estudiante(id_usu)
-                      values(nuevo_id_usu);
-                end $$;
-              '''
-      
-      elif tipo_usuario == 'especialista':
-        
-        inst =  '''
-                do $$
-                declare
-                    nuevo_id_usu int;
-                begin
-                    insert into usuario(nom_usu, pat_usu, mat_usu, tipo_usu, email_usu, contra_usu)
-                      values (%(nombre)s, %(aPaterno)s, %(aMaterno)s, %(tipo_usuario)s, %(correo)s, %(contrasenia)s)
-                      returning id_usu into nuevo_id_usu;
-
-                    insert into especialista(id_usu)
-                      values(nuevo_id_usu);
-                end $$;
-              '''
-      
-      with conn.cursor() as cursor:
-        cursor.execute(inst, {'nombre': nombre, 'aPaterno': aPaterno, 'aMaterno': aMaterno, 'tipo_usuario': tipo_usuario, 'correo': correo, 'contrasenia': contrasenia})
-        conn.commit()
-        cursor.close()
-      conn.close()
-      
-      return True
-      
-    else:
-      return False
+    with conn.cursor() as cursor:
+      cursor.execute(inst, {'nombre': nombre, 'paterno':paterno, 'materno':materno})
+      for row in cursor.fetchall():
+        id_pers = row[0]
+      cursor.close()
+    
+    inst =  '''insert into usuario(correo, contrasenia, id_pers, id_tipo_usu)
+              values(%(correo)s, %(contra)s, %(id_pers)s, %(tipo)s);
+            '''
+    
+    with conn.cursor() as cursor:
+      cursor.execute(inst, {'correo':correo, 'contra':contra, 'id_pers':id_pers, 'tipo':tipo})
+      conn.commit()
+      cursor.close()
+    conn.close()
+    
+    return True
   
   except Exception as e:
     print("(SISTEMA)   Error: "+str(e))

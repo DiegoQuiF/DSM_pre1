@@ -1,4 +1,5 @@
 from src.database.db import connection
+from src.models.DiagnosticoAuto import DiagnosticoAuto
 
 def postRegTest(id_est, matrizPreg):
   try:
@@ -7,14 +8,12 @@ def postRegTest(id_est, matrizPreg):
     id_hist = 0
     id_test_res = 0
     id_test_det_array = []
+    puntaje_completo = 0
+    diagnostico = ''
     
     inst =  '''
-            select h.id_hist
-              from historia h, estudiante_historia eh
-              where h.id_hist = eh.id_hist and eh.id_est = %(id_est)s
-                and h.apertura_hist = (select max(apertura_hist) from historia)
-                and h.id_hist = (select max(id_hist) from historia)
-                and h.estado_hist = 'proceso';
+            select max(h.id_hist) as id_hist from historia h, estudiante_historia eh
+	            where h.id_hist = eh.id_hist and h.estado = 'abierto' and eh.id_est = %(id_est)s;
             '''
     
     with conn.cursor() as cursor:
@@ -23,43 +22,32 @@ def postRegTest(id_est, matrizPreg):
         id_hist = row[0]
       cursor.close()
     
-    print(id_hist)
-    
     if (id_hist == 0):
+      print('No se encontró id_hist, se creará')
       inst =  '''
-              do $$
-              declare
-                nuevo_id_hist int;
-              begin
-                -- Generar nueva historia
-                insert into historia(estado_hist, apertura_hist)
-                  values ('proceso', to_date(current_date::text, 'YYYY-MM-DD'))
-                  returning id_hist into nuevo_id_hist;
-                -- Asociar historia al estudiante
-                insert into estudiante_historia(id_est, id_hist)
-                  values (%(id_est)s, nuevo_id_hist);
-              end $$;
+              insert into historia(apertura, estado)
+                values(to_date(current_date::text, 'YYYY-MM-DD'), 'abierto')
+                returning id_hist;
               '''
       with conn.cursor() as cursor:
-        cursor.execute(inst, {'id_est': id_est})
-        cursor.close()
-      inst =  '''
-              select h.id_hist
-                from historia h, estudiante_historia eh
-                where h.id_hist = eh.id_hist and eh.id_est = %(id_est)s
-                  and h.apertura_hist = (select max(apertura_hist) from historia)
-                  and h.id_hist = (select max(id_hist) from historia)
-                  and h.estado_hist = 'proceso';
-              '''
-      with conn.cursor() as cursor:
-        cursor.execute(inst, {'id_est': id_est})
+        cursor.execute(inst, )
         for row in cursor.fetchall():
           id_hist = row[0]
         cursor.close()
+      
+      inst =  '''
+              insert into estudiante_historia(id_est, id_hist)
+	              values(%(id_est)s, %(id_hist)s);
+              '''
+      with conn.cursor() as cursor:
+        cursor.execute(inst, {'id_est': id_est, 'id_hist': id_hist})
+        cursor.close()
+    
+    print('Se encontró la história con ID:', id_hist)
     
     inst =  '''
-            insert into test_resuelto(puntaje_total)
-              values (0)
+            insert into test_resuelto (puntaje_total, fecha)
+              values(0, to_date(current_date::text, 'YYYY-MM-DD'))
               returning id_test_res;
             '''
     
@@ -69,11 +57,9 @@ def postRegTest(id_est, matrizPreg):
         id_test_res = row[0]
       cursor.close()
     
-    print(id_test_res)
-    
     inst =  '''
             insert into historia_test_resuelto(id_hist, id_test_res)
-	            values (%(id_hist)s, %(id_test_res)s);
+	            values(%(id_hist)s, %(id_test_res)s);
             '''
     
     with conn.cursor() as cursor:
@@ -116,21 +102,39 @@ def postRegTest(id_est, matrizPreg):
     
     inst =  '''
             update test_resuelto
-              set puntaje_total = (
-                select sum(td.puntaje) from test_resuelto_detalle trd, test_detalle td
-                where trd.id_test_det = td.id_test_det and trd.id_test_res = %(id_test_res)s
-              )
-              where id_test_res = %(id_test_res)s;
+              set puntaje_total = (select sum(td.puntaje) from test_detalle td, test_resuelto_detalle trd
+                where td.id_test_det = trd.id_test_det and trd.id_test_res = %(id_test_res)s)
+              where id_test_res = %(id_test_res)s
+              returning puntaje_total;
             '''
-
+    
     with conn.cursor() as cursor:
       cursor.execute(inst, {'id_test_res': id_test_res})
+      for row in cursor.fetchall():
+        puntaje_completo = row[0]
+      cursor.close()
+    
+    inst =  '''
+            select d.*, tr2.puntaje_total, concat('[', r.minimo, ', ', r.maximo, ']') as rango
+              from diag_automatico da, diagnostico d, test t, test_rango tr, rango r, diag_automatico_test_rango datr,
+                test te, test_pregunta tp, test_detalle td, test_resuelto_detalle trd, test_resuelto tr2
+              where d.id_diag = da.id_diag and t.id_test = tr.id_test and tr.id_ran = r.id_ran and tr.id_test_ran = datr.id_test_ran 
+                and datr.id_dauto = da.id_dauto and te.id_test = tp.id_test and tp.id_test_preg = td.id_test_preg and te.id_test = tr.id_test
+                and td.id_test_det = trd.id_test_det and trd.id_test_res = %(id_test_res)s and tr2.id_test_res = trd.id_test_res 
+                and r.minimo <= %(puntaje_completo)s and r.maximo >= %(puntaje_completo)s;
+            '''
+    
+    with conn.cursor() as cursor:
+      cursor.execute(inst, {'puntaje_completo': puntaje_completo, 'id_test_res':id_test_res})
+      for row in cursor.fetchall():
+        diagnostico = DiagnosticoAuto(row[1], row[2], row[3], row[4], row[5])
+        diagnostico.id_diag = row[0]
       conn.commit()
       cursor.close()
     conn.close()
     
-    return True
+    return diagnostico
   
   except Exception as e:
     print("(SISTEMA)   Error: "+str(e))
-    return False
+    return ''

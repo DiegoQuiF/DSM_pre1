@@ -5,6 +5,7 @@ from src.services.POST.postObtenerTest import postObtenerTest
 from src.services.POST.postRegTest import postRegTest
 from src.services.POST.postObtenerHistorias import postObtenerHistorias
 from src.services.POST.postObtenerTestHistoria import postObtenerTestHistoria
+from src.services.POST.postCompletarRegister import postCompletarRegister
 from src.services.GET.getTest import getTests
 from src.services.GET.getTodosTest import getObtenerTodosTest
 
@@ -29,7 +30,36 @@ def login():
 def register():
   try:
     data = request.get_json()
-    result = postRegister(data)
+    nombre = data['nombre']
+    paterno = data['aPaterno']
+    materno = data['aMaterno']
+    correo = data['correo']
+    contra = data['contrasenia']
+    tipo = data['tipo_usuario']
+    result = postRegister(nombre, paterno, materno, correo, contra, tipo)
+    if(result):
+      return jsonify({'message':'COMPLETE', 'success':True})
+    else:
+      return jsonify({'message':'ERROR', 'success':False})
+  except Exception as e:
+    return jsonify({'message':'ERROR', 'success':False})
+
+@main.route("/completarRegister", methods = ['POST'])
+def completar_register():
+  try:
+    data = request.get_json()
+    
+    id_pers = data['id_pers']
+    nombre = data['nombre']
+    paterno = data['aPaterno']
+    materno = data['aMaterno']
+    num_documento = data['num_documento']
+    sexo = data['sexo']
+    edad = data['edad']
+    num_celular = data['num_celular']
+    id_ubi = data['id_ubi']
+    
+    result = postCompletarRegister(id_pers, nombre, paterno, materno, num_documento, sexo, edad, num_celular, id_ubi)
     if(result):
       return jsonify({'message':'COMPLETE', 'success':True})
     else:
@@ -66,7 +96,7 @@ def obtenerTest():
 def registerTest():
   try:
     data = request.get_json()
-    id_est = data['id_est']    
+    id_est = data['id_usu']    
     matrizPreg = data['preguntas']
     
     matriz = []
@@ -75,51 +105,11 @@ def registerTest():
       matriz.append(fila)
     
     result = postRegTest(id_est, matriz)
-    if(result):
-      return jsonify({'message':'COMPLETE', 'success':True})
+    if(result!='')
+      data = {'diagnostico_automatico': result.to_json()}
+      return jsonify({'message':'COMPLETE', 'success':True, 'data':data})
     else:
       return jsonify({'message':'ERROR', 'success':False})
   except Exception as e:
     return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
 
-@main.route("/obtenerHistorias", methods = ['POST'])
-def obtenerHistorias():
-  try:
-    data = request.get_json()
-    id_est = data['id_est']
-    
-    result = postObtenerHistorias(id_est)
-    
-    if(result != ''):
-      return jsonify({'message':'COMPLETE', 'success':True, 'data':result})
-    else:
-      return jsonify({'message':'ERROR', 'success':False})
-  except Exception as e:
-    return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
-
-@main.route("/obtenerTestHistoria", methods = ['POST'])
-def obtenerTestHistoria():
-  try:
-    data = request.get_json()
-    id_hist = data['id_hist']
-    
-    result = postObtenerTestHistoria(id_hist)
-    
-    if(result != ''):
-      return jsonify({'message':'COMPLETE', 'success':True, 'data':result})
-    else:
-      return jsonify({'message':'ERROR', 'success':False})
-  except Exception as e:
-    return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
-
-@main.route("/obtenerTodosTest")
-def obtenerTodosTest():
-  try:
-    result = getObtenerTodosTest()
-    
-    if(result != ''):
-      return jsonify({'message':'COMPLETE', 'success':True, 'data':result})
-    else:
-      return jsonify({'message':'ERROR', 'success':False})
-  except Exception as e:
-    return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
