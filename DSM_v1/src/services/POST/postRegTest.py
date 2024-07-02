@@ -22,7 +22,7 @@ def postRegTest(id_est, matrizPreg):
         id_hist = row[0]
       cursor.close()
     
-    if (id_hist == 0):
+    if (id_hist == 0 or id_hist == None):
       print('No se encontró id_hist, se creará')
       inst =  '''
               insert into historia(apertura, estado)
