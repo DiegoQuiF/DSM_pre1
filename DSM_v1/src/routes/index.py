@@ -13,6 +13,8 @@ from src.services.POST.postObtenerHistorias import postObtenerHistorias
 from src.services.POST.postObtenerUnaHistoriaH import postObtenerUnaHistoriaH
 from src.services.POST.postObtenerUnaHistoriaT import postObtenerUnaHistoriaT
 from src.services.POST.postObtenerTodosTest import postObtenerTodosTest
+from src.services.POST.postObtenerTestDetalle import postObtenerTestDetalle
+from src.services.POST.postObtenerUbigeosEst import postObtenerUbigeosEst
 from src.services.GET.getObtenerDepartamentos import getObtenerDepartamentos
 from src.services.GET.getTest import getTests
 from src.services.GET.getObtenerTestsEvaluables import getObtenerTestsEvaluables
@@ -276,6 +278,32 @@ def obtenerTodosTest():
     result = postObtenerTodosTest(id_hist)
     if(result!=''):
       data = {'tests': result}
+      return jsonify({'message':'COMPLETE', 'success':True, 'data':data})
+    else:
+      return jsonify({'message':'ERROR', 'success':False})
+  except Exception as e:
+    return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
+
+@main.route("/obtenerTestDetalle", methods = ['POST'])
+def obtenerTestDetalle():
+  try:
+    data = request.get_json()
+    id_test_res = data['id_test_res']
+    result = postObtenerTestDetalle(id_test_res)
+    if(result!=''):
+      data = {'test': result}
+      return jsonify({'message':'COMPLETE', 'success':True, 'data':data})
+    else:
+      return jsonify({'message':'ERROR', 'success':False})
+  except Exception as e:
+    return jsonify({'message':'ERROR', 'success':False, 'error': str(e)})
+
+@main.route("/obtenerUbigeosEst")
+def obtenerUbigeosEst():
+  try:
+    result = postObtenerUbigeosEst()
+    if(result!=''):
+      data = {'ubigeos': result}
       return jsonify({'message':'COMPLETE', 'success':True, 'data':data})
     else:
       return jsonify({'message':'ERROR', 'success':False})
