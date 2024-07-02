@@ -1,6 +1,4 @@
 from src.database.db import connection
-from src.models.Estudiante import Estudiante
-from src.models.Especialista import Especialista
 from src.models.UsuarioLog import UsuarioLog
 
 def postLogin(correo, contra):
